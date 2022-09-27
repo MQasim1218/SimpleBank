@@ -9,9 +9,10 @@ import (
 
 func TestTransferTx(t *testing.T) {
 	store := NewStore(testDB)
-	acc1 := createAcc(t)
-	acc2 := createAcc(t)
+	acc1 := createAcc(t) // Sender Account
+	acc2 := createAcc(t) // Recieving Account
 	amount := int64(20)
+	n := 5
 
 	errs := make(chan error)
 	TxRes := make(chan TransferTxRes)
@@ -30,7 +31,9 @@ func TestTransferTx(t *testing.T) {
 		}(errs, TxRes)
 	}
 
-	for i := 0; i < 5; i++ {
+	var existed map[int]bool = make(map[int]bool)
+
+	for i := 0; i < n; i++ {
 		err := <-errs
 		res := <-TxRes
 
@@ -70,5 +73,17 @@ func TestTransferTx(t *testing.T) {
 		toAcc := res.ToAccount
 		require.NotEmpty(t, toAcc)
 		require.Equal(t, toAcc.ID, acc2.ID)
+
+		diff1 := acc1.Balance - fromAcc.Balance
+		diff2 := toAcc.Balance - acc2.Balance
+		require.Equal(t, diff1, diff2)
+		require.True(t, diff1 >= 0)
+		require.True(t, diff1%amount == 0)
+
+		k := int(diff1 / amount)
+		// require.True(t, k == i+1)
+		require.True(t, k >= 0 && k < n)
+		require.NotContains(t, existed, k)
+		existed[k] = true
 	}
 }
