@@ -88,22 +88,24 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 			return err
 		}
 
-		// Todo: Get The Accounts and Change their Balance
-		// up_args := UpdateAccountParams{
-		// 	ID:       0,
-		// 	Owner:    "",
-		// 	Balance:  0,
-		// 	Currency: "",
-		// }
-		// if res.FromAccount, err = q.UpdateAccount(context.Background(), args.From_acc_id); err != nil {
-		// 	return err
-		// }
-		// if res.ToAccount, err = q.GetAccount(context.Background(), args.To_acc_id); err != nil {
-		// 	return err
-		// }
+		{
+			// Todo: Get The Accounts and Change their Balance
+			// up_args := UpdateAccountParams{
+			// 	ID:       0,
+			// 	Owner:    "",
+			// 	Balance:  0,
+			// 	Currency: "",
+			// }
+			// if res.FromAccount, err = q.UpdateAccount(context.Background(), args.From_acc_id); err != nil {
+			// 	return err
+			// }
+			// if res.ToAccount, err = q.GetAccount(context.Background(), args.To_acc_id); err != nil {
+			// 	return err
+			// }
+		}
 
 		return nil
 	})
 
-	return nil, nil
+	return &res, nil
 }
