@@ -12,13 +12,13 @@ import (
 
 const createTransfer = `-- name: CreateTransfer :one
 Insert into "Transfers" (
-    "from_account", 
-    "to_account", 
-    "transaction_time", 
-    "amount"
-) Values (
-    $1, $2, $3, $4
-) RETURNING id, from_account, to_account, transaction_time, amount
+        "from_account",
+        "to_account",
+        "transaction_time",
+        "amount"
+    )
+Values ($1, $2, $3, $4)
+RETURNING id, from_account, to_account, transaction_time, amount
 `
 
 type CreateTransferParams struct {
@@ -66,8 +66,10 @@ func (q *Queries) DeleteTransfer(ctx context.Context, id int64) (Transfer, error
 }
 
 const getTransfer = `-- name: GetTransfer :one
-SELECT id, from_account, to_account, transaction_time, amount from "Transfers"
-WHERE id = $1 LIMIT 1
+SELECT id, from_account, to_account, transaction_time, amount
+from "Transfers"
+WHERE id = $1
+LIMIT 1
 `
 
 func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
@@ -84,7 +86,8 @@ func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
 }
 
 const listTransfers = `-- name: ListTransfers :many
-SELECT id, from_account, to_account, transaction_time, amount from "Transfers"
+SELECT id, from_account, to_account, transaction_time, amount
+from "Transfers"
 ORDER BY id
 LIMIT $1 OFFSET $2
 `
@@ -125,7 +128,7 @@ func (q *Queries) ListTransfers(ctx context.Context, arg ListTransfersParams) ([
 
 const updateTransfer = `-- name: UpdateTransfer :exec
 UPDATE "Transfers"
-set from_account = $2,
+SET from_account = $2,
     to_account = $3,
     transaction_time = $4,
     amount = $5

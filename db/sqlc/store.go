@@ -88,20 +88,45 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 			return err
 		}
 
-		{
-			// Todo: Get The Accounts and Change their Balance
-			// up_args := UpdateAccountParams{
-			// 	ID:       0,
-			// 	Owner:    "",
-			// 	Balance:  0,
-			// 	Currency: "",
-			// }
-			// if res.FromAccount, err = q.UpdateAccount(context.Background(), args.From_acc_id); err != nil {
-			// 	return err
-			// }
-			// if res.ToAccount, err = q.GetAccount(context.Background(), args.To_acc_id); err != nil {
-			// 	return err
-			// }
+		//	Simple Approach -> Get Account from database -> Update Balance
+
+		fromAcc, err := q.GetAccountForUpdate(ctx, args.From_acc_id)
+		if err != nil {
+			return err
+		}
+
+		toAcc, err := q.GetAccountForUpdate(ctx, args.To_acc_id)
+		if err != nil {
+			return err
+		}
+
+		from_acc_bal := fromAcc.Balance - args.Amount
+		to_acc_bal := toAcc.Balance + args.Amount
+
+		upToAcc := UpdateAccountParams{
+			ID:       toAcc.ID,
+			Owner:    toAcc.Owner,
+			Balance:  to_acc_bal,
+			Currency: toAcc.Currency,
+		}
+		q.UpdateAccount(ctx, upToAcc)
+
+		upFrAcc := UpdateAccountParams{
+			ID:       fromAcc.ID,
+			Owner:    fromAcc.Owner,
+			Balance:  from_acc_bal,
+			Currency: toAcc.Currency,
+		}
+		q.UpdateAccount(ctx, upFrAcc)
+
+		res.ToAccount, err = q.GetAccount(ctx, toAcc.ID)
+		if err != nil {
+			return err
+		}
+
+		res.FromAccount, err = q.GetAccount(ctx, fromAcc.ID)
+		if err != nil {
+			return err
 		}
 
 		return nil

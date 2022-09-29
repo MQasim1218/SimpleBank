@@ -14,6 +14,8 @@ func TestTransferTx(t *testing.T) {
 	amount := int64(20)
 	n := 5
 
+	println("Before Transaction ==> From account balance", acc1.Balance, " || To account balance: ", acc2.Balance)
+
 	errs := make(chan error)
 	TxRes := make(chan TransferTxRes)
 
@@ -66,13 +68,15 @@ func TestTransferTx(t *testing.T) {
 		require.Equal(t, from_ent.Amount, -amount)
 		require.NotZero(t, from_ent.ID)
 
-		fromAcc := res.ToAccount
+		fromAcc := res.FromAccount
 		require.NotEmpty(t, fromAcc)
 		require.Equal(t, fromAcc.ID, acc1.ID)
 
 		toAcc := res.ToAccount
 		require.NotEmpty(t, toAcc)
 		require.Equal(t, toAcc.ID, acc2.ID)
+
+		println("TX: ", i, " || From account balance", fromAcc.Balance, " || To account balance: ", toAcc.Balance)
 
 		diff1 := acc1.Balance - fromAcc.Balance
 		diff2 := toAcc.Balance - acc2.Balance
@@ -86,4 +90,17 @@ func TestTransferTx(t *testing.T) {
 		require.NotContains(t, existed, k)
 		existed[k] = true
 	}
+
+	upFromAcc, err := store.GetAccount(context.Background(), acc1.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, upFromAcc)
+	require.Equal(t, upFromAcc.Balance, int(acc1.Balance)-(n*int(amount)))
+
+	upToAcc, err := store.GetAccount(context.Background(), acc2.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, upToAcc)
+	require.Equal(t, upFromAcc.Balance, int(acc1.Balance)+(n*int(amount)))
+
+	println("After Transacrion ==> To account balance", upFromAcc.Balance, " || To account balance: ", upToAcc.Balance)
+
 }
