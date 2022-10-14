@@ -13,9 +13,9 @@ func TestTransferTx(t *testing.T) {
 	acc1 := createAcc(t) // Sender Account
 	acc2 := createAcc(t) // Recieving Account
 	amount := int64(20)
-	n := 2
+	n := 3
 
-	println("Before Transaction ==> From account balance", acc1.Balance, " || To account balance: ", acc2.Balance)
+	// println("Before Transaction ==> From account balance", acc1.Balance, " || To account balance: ", acc2.Balance)
 
 	errs := make(chan error)
 	TxRes := make(chan TransferTxRes)
@@ -93,23 +93,84 @@ func TestTransferTx(t *testing.T) {
 		require.True(t, diff1%amount == 0)
 
 		k := int(diff1 / amount)
-		print("The value of k is: ", k, "\n")
-		// require.True(t, k == i+1)
+		// print("The value of k is: ", k, "\n")
+		require.True(t, k == i+1)
 		require.True(t, k >= 0 && k <= n)
 		require.NotContains(t, existed, k)
 		existed[k] = true
 	}
 
+	// Check FromAccount balance after the money transfer
 	upFromAcc, err := store.GetAccount(context.Background(), acc1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, upFromAcc)
 	require.Equal(t, upFromAcc.Balance, acc1.Balance-(int64(n)*amount))
 
+	// Check ToAccount balance after the money transfer
 	upToAcc, err := store.GetAccount(context.Background(), acc2.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, upToAcc)
-	require.Equal(t, upFromAcc.Balance, int(acc1.Balance)+(n*int(amount)))
+	require.Equal(t, upToAcc.Balance, acc2.Balance+(int64(n)*amount))
 
-	println("After Transacrion ==> To account balance", upFromAcc.Balance, " || To account balance: ", upToAcc.Balance)
+	println("After Transacrion ==> From account balance", upFromAcc.Balance, " || To account balance: ", upToAcc.Balance)
+
+}
+
+func TestTransferTxOrder(t *testing.T) {
+	store := NewStore(testDB)
+	acc1 := createAcc(t)
+	acc2 := createAcc(t)
+	amount := int64(20)
+	n := 6
+
+	println("Before Transaction ==> From account balance", acc1.Balance, " || To account balance: ", acc2.Balance)
+
+	errs := make(chan error)
+	// TxRes := make(chan TransferTxRes)
+
+	for i := 0; i < n; i++ {
+
+		go func(errCh chan error) {
+			ctx := context.Background()
+
+			fromAccId := acc1.ID
+			toAccId := acc2.ID
+
+			if i%2 == 0 {
+				fromAccId = acc2.ID
+				toAccId = acc1.ID
+			}
+
+			_, err := store.TranferTx(ctx, TransferTxPrams{
+				From_acc_id: fromAccId,
+				To_acc_id:   toAccId,
+				Amount:      amount,
+			})
+
+			errCh <- err
+			// resCh <- *Trtx_res
+
+		}(errs)
+	}
+
+	// Read results and errors from the channel || Make sure there are none...
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+	}
+
+	// Check FromAccount balance after the money transfer
+	upFromAcc, err := store.GetAccount(context.Background(), acc1.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, upFromAcc)
+	require.Equal(t, upFromAcc.Balance, acc1.Balance)
+
+	// Check ToAccount balance after the money transfer
+	upToAcc, err := store.GetAccount(context.Background(), acc2.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, upToAcc)
+	require.Equal(t, upToAcc.Balance, acc2.Balance)
+
+	println("After Transacrion ==> From account balance", upFromAcc.Balance, " || To account balance: ", upToAcc.Balance)
 
 }

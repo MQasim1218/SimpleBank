@@ -65,12 +65,11 @@ func (q *Queries) DeleteTransfer(ctx context.Context, id int64) (Transfer, error
 	return i, err
 }
 
-
 const getTransfer = `-- name: GetTransfer :one
 SELECT id, from_account, to_account, transaction_time, amount
 from "Transfers"
 WHERE id = $1
-LIMIT 1;
+LIMIT 1
 `
 
 func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {

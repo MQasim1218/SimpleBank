@@ -5,7 +5,6 @@ CREATE TABLE "Accounts" (
   "currency" varchar NOT NULL,
   "created_at" timestamptz DEFAULT 'now()'
 );
-
 -- Create Entries Table
 CREATE TABLE "Entries" (
   "id" bigserial PRIMARY KEY,
@@ -13,7 +12,6 @@ CREATE TABLE "Entries" (
   "amount" bigint NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT 'now()'
 );
-
 -- Create Transfers Table
 CREATE TABLE "Transfers" (
   "id" bigserial PRIMARY KEY,
@@ -22,7 +20,6 @@ CREATE TABLE "Transfers" (
   "transaction_time" timestamptz NOT NULL DEFAULT 'now()',
   "amount" bigint NOT NULL
 );
-
 -- Create some indexes!! Dont even know what these are!!
 CREATE INDEX ON "Accounts" ("owner");
 CREATE INDEX ON "Entries" ("account_id");
