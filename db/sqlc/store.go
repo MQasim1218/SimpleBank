@@ -12,6 +12,8 @@ type Store struct {
 	db *sql.DB
 }
 
+var txkey = struct{}{}
+
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		db:      db,
@@ -56,8 +58,10 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 	var res TransferTxRes = TransferTxRes{}
 
 	st.execTx(ctx, func(q *Queries) (err error) {
+		txname := ctx.Value(txkey)
 
 		// Create a transfer
+		fmt.Println(txname, " - Creating a Transfer")
 		tr_args := CreateTransferParams{
 			FromAccount:     args.From_acc_id,
 			ToAccount:       args.To_acc_id,
@@ -69,7 +73,7 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 		}
 
 		// Create an Entry for account 1.
-
+		fmt.Println(txname, " - Creating an Entry for sender account!!")
 		entry_args := CreateEntryParams{
 			AccountID: args.To_acc_id,
 			Amount:    args.Amount,
@@ -79,6 +83,7 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 			return err
 		}
 
+		fmt.Println(txname, " - Creating an Entry for receiving account!!")
 		entry_args = CreateEntryParams{
 			AccountID: args.From_acc_id,
 			Amount:    -args.Amount,
@@ -90,19 +95,28 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 
 		//	Simple Approach -> Get Account from database -> Update Balance
 
+		fmt.Println(txname, " - Getting From Account for update!!")
 		fromAcc, err := q.GetAccountForUpdate(ctx, args.From_acc_id)
 		if err != nil {
 			return err
 		}
+		fmt.Println(txname, " - Update From Account balance!!")
+		from_acc_bal := fromAcc.Balance - args.Amount
+		upFrAcc := UpdateAccountParams{
+			ID:       fromAcc.ID,
+			Owner:    fromAcc.Owner,
+			Balance:  from_acc_bal,
+			Currency: fromAcc.Currency,
+		}
+		q.UpdateAccount(ctx, upFrAcc)
 
+		fmt.Println(txname, " - Getting To Account for update!!")
 		toAcc, err := q.GetAccountForUpdate(ctx, args.To_acc_id)
 		if err != nil {
 			return err
 		}
-
-		from_acc_bal := fromAcc.Balance - args.Amount
+		fmt.Println(txname, " - Update to Account balance!!")
 		to_acc_bal := toAcc.Balance + args.Amount
-
 		upToAcc := UpdateAccountParams{
 			ID:       toAcc.ID,
 			Owner:    toAcc.Owner,
@@ -110,14 +124,6 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 			Currency: toAcc.Currency,
 		}
 		q.UpdateAccount(ctx, upToAcc)
-
-		upFrAcc := UpdateAccountParams{
-			ID:       fromAcc.ID,
-			Owner:    fromAcc.Owner,
-			Balance:  from_acc_bal,
-			Currency: toAcc.Currency,
-		}
-		q.UpdateAccount(ctx, upFrAcc)
 
 		res.ToAccount, err = q.GetAccount(ctx, toAcc.ID)
 		if err != nil {

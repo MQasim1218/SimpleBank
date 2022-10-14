@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,16 +13,20 @@ func TestTransferTx(t *testing.T) {
 	acc1 := createAcc(t) // Sender Account
 	acc2 := createAcc(t) // Recieving Account
 	amount := int64(20)
-	n := 5
+	n := 2
 
 	println("Before Transaction ==> From account balance", acc1.Balance, " || To account balance: ", acc2.Balance)
 
 	errs := make(chan error)
 	TxRes := make(chan TransferTxRes)
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < n; i++ {
+		// var tr_names = make(map[int]string)
+		var tx_name = fmt.Sprintf("TX: %d", i+1)
+
 		go func(errCh chan error, resCh chan TransferTxRes) {
-			Trtx_res, err := store.TranferTx(context.Background(), TransferTxPrams{
+			ctx := context.WithValue(context.Background(), txkey, tx_name)
+			Trtx_res, err := store.TranferTx(ctx, TransferTxPrams{
 				From_acc_id: acc1.ID,
 				To_acc_id:   acc2.ID,
 				Amount:      amount,
@@ -36,12 +41,15 @@ func TestTransferTx(t *testing.T) {
 	var existed map[int]bool = make(map[int]bool)
 
 	for i := 0; i < n; i++ {
+		// Read results and errors from the channel
 		err := <-errs
 		res := <-TxRes
 
+		// Ensure no errors
 		require.NoError(t, err)
 		require.NotEmpty(t, res)
 
+		// Extreact Transfer Object from the result returned by the DB.
 		resTr := res.Transfer
 		require.Equal(t, resTr.Amount, amount)
 		require.NotEmpty(t, resTr)
@@ -85,8 +93,9 @@ func TestTransferTx(t *testing.T) {
 		require.True(t, diff1%amount == 0)
 
 		k := int(diff1 / amount)
+		print("The value of k is: ", k, "\n")
 		// require.True(t, k == i+1)
-		require.True(t, k >= 0 && k < n)
+		require.True(t, k >= 0 && k <= n)
 		require.NotContains(t, existed, k)
 		existed[k] = true
 	}
@@ -94,7 +103,7 @@ func TestTransferTx(t *testing.T) {
 	upFromAcc, err := store.GetAccount(context.Background(), acc1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, upFromAcc)
-	require.Equal(t, upFromAcc.Balance, int(acc1.Balance)-(n*int(amount)))
+	require.Equal(t, upFromAcc.Balance, acc1.Balance-(int64(n)*amount))
 
 	upToAcc, err := store.GetAccount(context.Background(), acc2.ID)
 	require.NoError(t, err)

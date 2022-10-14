@@ -35,8 +35,8 @@ COMMENT ON COLUMN "Entries"."amount" IS 'can be positive or nagative';
 
 COMMENT ON COLUMN "Transfers"."amount" IS 'must be positive';
 
-ALTER TABLE "Entries" ADD FOREIGN KEY ("account_id") REFERENCES "Accounts" ("id");
+-- ALTER TABLE "Entries" ADD FOREIGN KEY ("account_id") REFERENCES "Accounts" ("id");
 
-ALTER TABLE "Transfers" ADD FOREIGN KEY ("from_account") REFERENCES "Accounts" ("id");
+-- ALTER TABLE "Transfers" ADD FOREIGN KEY ("from_account") REFERENCES "Accounts" ("id");
 
-ALTER TABLE "Transfers" ADD FOREIGN KEY ("to_account") REFERENCES "Accounts" ("id");
+-- ALTER TABLE "Transfers" ADD FOREIGN KEY ("to_account") REFERENCES "Accounts" ("id");
