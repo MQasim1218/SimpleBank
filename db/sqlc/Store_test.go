@@ -126,50 +126,67 @@ func TestTransferTxOrder(t *testing.T) {
 	println("Before Transaction ==> From account balance", acc1.Balance, " || To account balance: ", acc2.Balance)
 
 	errs := make(chan error)
-	// TxRes := make(chan TransferTxRes)
+	TxRes := make(chan TransferTxRes)
+	var fromAccId, toAccId int64
 
 	for i := 0; i < n; i++ {
 
-		go func(errCh chan error) {
+		go func(errCh chan error, resCh chan TransferTxRes, i int) {
 			ctx := context.Background()
 
-			fromAccId := acc1.ID
-			toAccId := acc2.ID
+			fromAccId = acc1.ID
+			toAccId = acc2.ID
 
 			if i%2 == 0 {
 				fromAccId = acc2.ID
 				toAccId = acc1.ID
 			}
 
-			_, err := store.TranferTx(ctx, TransferTxPrams{
+			Trtx_res, err := store.TranferTx(ctx, TransferTxPrams{
 				From_acc_id: fromAccId,
 				To_acc_id:   toAccId,
 				Amount:      amount,
 			})
 
 			errCh <- err
-			// resCh <- *Trtx_res
+			resCh <- *Trtx_res
 
-		}(errs)
+		}(errs, TxRes, i)
 	}
 
 	// Read results and errors from the channel || Make sure there are none...
 	for i := 0; i < n; i++ {
 		err := <-errs
 		require.NoError(t, err)
+
+		res := <-TxRes
+		require.NoError(t, err)
+
+		fromAcc := res.FromAccount
+		println("Sender Acc Id: ", fromAccId)
+		require.NotEmpty(t, fromAcc)
+		require.Equal(t, fromAcc.ID, fromAccId)
+
+		toAcc := res.ToAccount
+		println("Receiving Acc Id: ", toAccId)
+		require.NotEmpty(t, toAcc)
+		require.Equal(t, toAcc.ID, toAccId)
+
+		println("TX: ", i, " || From account balance", fromAcc.Balance, " || To account balance: ", toAcc.Balance)
+
 	}
 
 	// Check FromAccount balance after the money transfer
 	upAcc1, err := store.GetAccount(context.Background(), acc1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, upAcc1)
-	require.Equal(t, upAcc1.Balance, acc1.Balance)
+	require.Equal(t, acc1.Balance, upAcc1.Balance)
 
 	// Check ToAccount balance after the money transfer
 	upAcc2, err := store.GetAccount(context.Background(), acc2.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, upAcc2)
-	require.Equal(t, upAcc2.Balance, acc2.Balance)
+	require.Equal(t, acc2.Balance, upAcc2.Balance)
 
 	println("After Transacrion ==> Account 1 balance", upAcc1.Balance, " || Account 2 balance: ", upAcc2.Balance)
 

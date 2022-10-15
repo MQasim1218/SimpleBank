@@ -68,10 +68,10 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 	var res TransferTxRes = TransferTxRes{}
 
 	st.execTx(ctx, func(q *Queries) (err error) {
-		// txname := ctx.Value(txkey)
+		txname := ctx.Value(txkey)
 
 		// Create a transfer
-		// fmt.Println(txname, " - Creating a Transfer")
+		fmt.Println(txname, " - Creating a Transfer")
 		tr_args := CreateTransferParams{
 			FromAccount:     args.From_acc_id,
 			ToAccount:       args.To_acc_id,
@@ -106,6 +106,7 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 		//	Simple Approach -> Get Account from database -> Update Balance
 
 		// fmt.Println(txname, " - Getting From Account for update!!")
+		// var fromAcc, toAcc Account
 
 		if args.From_acc_id < args.To_acc_id {
 			fromAcc, err := q.GetAccountForUpdate(ctx, args.From_acc_id)
@@ -136,6 +137,16 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 				Currency: toAcc.Currency,
 			}
 			q.UpdateAccount(ctx, upToAcc)
+
+			res.ToAccount, err = q.GetAccount(ctx, toAcc.ID)
+			if err != nil {
+				return err
+			}
+
+			res.FromAccount, err = q.GetAccount(ctx, fromAcc.ID)
+			if err != nil {
+				return err
+			}
 
 		} else {
 
@@ -177,7 +188,6 @@ func (st *Store) TranferTx(ctx context.Context, args TransferTxPrams) (*Transfer
 			if err != nil {
 				return err
 			}
-
 		}
 
 		return nil
