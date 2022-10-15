@@ -160,17 +160,17 @@ func TestTransferTxOrder(t *testing.T) {
 	}
 
 	// Check FromAccount balance after the money transfer
-	upFromAcc, err := store.GetAccount(context.Background(), acc1.ID)
+	upAcc1, err := store.GetAccount(context.Background(), acc1.ID)
 	require.NoError(t, err)
-	require.NotEmpty(t, upFromAcc)
-	require.Equal(t, upFromAcc.Balance, acc1.Balance)
+	require.NotEmpty(t, upAcc1)
+	require.Equal(t, upAcc1.Balance, acc1.Balance)
 
 	// Check ToAccount balance after the money transfer
-	upToAcc, err := store.GetAccount(context.Background(), acc2.ID)
+	upAcc2, err := store.GetAccount(context.Background(), acc2.ID)
 	require.NoError(t, err)
-	require.NotEmpty(t, upToAcc)
-	require.Equal(t, upToAcc.Balance, acc2.Balance)
+	require.NotEmpty(t, upAcc2)
+	require.Equal(t, upAcc2.Balance, acc2.Balance)
 
-	println("After Transacrion ==> From account balance", upFromAcc.Balance, " || To account balance: ", upToAcc.Balance)
+	println("After Transacrion ==> Account 1 balance", upAcc1.Balance, " || Account 2 balance: ", upAcc2.Balance)
 
 }
