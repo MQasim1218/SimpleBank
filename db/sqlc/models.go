@@ -30,6 +30,6 @@ type Transfer struct {
 	FromAccount     int64     `json:"from_account"`
 	ToAccount       int64     `json:"to_account"`
 	TransactionTime time.Time `json:"transaction_time"`
-	// must be positive
+	// must be positivecg
 	Amount int64 `json:"amount"`
 }
