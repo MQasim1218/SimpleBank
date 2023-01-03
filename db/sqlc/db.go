@@ -17,6 +17,7 @@ type DBTX interface {
 }
 
 func New(db DBTX) *Queries {
+	_ = "abc"
 	return &Queries{db: db}
 }
 
