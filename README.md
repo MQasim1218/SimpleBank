@@ -1,0 +1,3 @@
+# SimpleBank
+
+A demo project implementing a backend for a Simple Bank Application in Golang...
